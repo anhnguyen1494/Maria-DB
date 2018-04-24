@@ -1,6 +1,6 @@
 [Source](https://mariadb.com/kb/en/library/compound-composite-indexes/ "Permalink to Compound (Composite) Indexes - MariaDB Knowledge Base")
 
-# Các chỉ số tổng hợp (hỗn hợp) - Kiến thức cơ bản MariaDB
+# Các chỉ mục tổng hợp (hỗn hợp) - Kiến thức cơ bản MariaDB
 
 ## Một bài học nhỏ trong "chỉ mục tổng hợp" - ("composite Index")
 
