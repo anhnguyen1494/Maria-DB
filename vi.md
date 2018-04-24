@@ -1,10 +1,10 @@
 [Source](https://mariadb.com/kb/en/library/compound-composite-indexes/ "Permalink to Compound (Composite) Indexes - MariaDB Knowledge Base")
 
-# Các chỉ số tổng hợp (hỗn hợp) - Kiến thức cơ bản MariaDB
+# Các chỉ mục tổng hợp (hỗn hợp) - Kiến thức cơ bản MariaDB
 
-## Một bài học nhỏ trong "chỉ mục tổng hợp" ("chỉ mục hỗn hợp")
+## Một bài học nhỏ trong "chỉ mục tổng hợp" - ("composite Index")
 
-Tài liệu này lúc bắt đầu khá tầm thường và có lẽ nhàm chán, nhưng xây dựng thêm thông tin thú vị, có lẽ những điều bạn không nhận ra về cách MariaDB và lập chỉ mục MySQL hoạt động.
+Tài liệu này lúc bắt đầu khá tầm thường và có lẽ nhàm chán, nhưng xây dựng thêm thông tin thú vị, có lẽ những điều bạn không nhận ra về cách chỉ mục MariaDB và MySQL hoạt động.
 
 Điều này cũng giải thích [GIẢI THÍCH] [1] (ở một mức độ nào đó).
 
@@ -53,7 +53,7 @@ Một số INDEX để thử ...
 
 ## Không có chỉ mục nào
 
-Vâng, tôi đang giả vờ một chút ở đây. Tôi có một KHÓA CHÍNH trên `seq`, nhưng điều đó không có lợi thế về truy vấn chúng tôi đang nghiên cứu.
+Vâng, tôi đang luyên thuyên một chút ở đây. Tôi có một KHÓA CHÍNH trên `seq`, nhưng điều đó không có lợi ích về truy vấn chúng ta đang tìm hiêu.
     
     
     mysql>  SHOW CREATE TABLE Presidents G
@@ -79,27 +79,27 @@ Vâng, tôi đang giả vờ một chút ở đây. Tôi có một KHÓA CHÍNH 
                id: 1
       select_type: SIMPLE
             table: Presidents
-             type: ALL        <-- Implies table scan
+             type: ALL        <-- Ngụ ý là scan bảng
     possible_keys: NULL
-              key: NULL       <-- Implies that no index is useful, hence table scan
+              key: NULL       <-- Ngụ ý là không có index nào hữu ích, do đó scan bảng
           key_len: NULL
               ref: NULL
-             rows: 44         <-- That's about how many rows in the table, so table scan
+             rows: 44         <-- Điều này là có bao nhiêu hàng trong bảng, vậy scan bảng
             Extra: Using where
     
 
-## Triển khai rõ ràng hơn
+## Chi tiết triển khai
 
 Trước tiên, hãy mô tả cách InnoDB lưu trữ và sử dụng các chỉ mục.
 
 * Dữ liệu và KHÓA CHÍNH được "nhóm" lại với nhau trên BTree.
 * Tra cứu BTree khá nhanh và hiệu quả. Đối với một bảng hàng triệu có thể có 3 cấp độ của BTree, và hai cấp cao nhất có thể được lưu trữ. 
-* Mỗi chỉ số phụ nằm trong một BTree khác, với KHÓA CHÍNH ở lá.
+* Mỗi chỉ mục thứ cấp trong một BTree khác, với KHÓA CHÍNH ở lá.
 * Tìm nạp các mục 'liên tiếp' (theo chỉ mục) từ BTree rất hiệu quả vì chúng được lưu trữ liên tiếp. 
 * Để đơn giản, chúng ta có thể đếm từng tra cứu BTree dưới dạng 1 đơn vị công việc và bỏ qua 
 các lần quét cho các mục liên tiếp. Điều này xấp xỉ số lần truy cập cho một bảng lớn trong một hệ thống đang hoạt động. 
 
-Đối với MyISAM, KHÓA CHÍNH không được lưu trữ với dữ liệu, vì vậy hãy nghĩ về nó như là một khóa phụ (quá đơn giản).
+Đối với MyISAM, KHÓA CHÍNH không được lưu trữ với dữ liệu, vì vậy hãy nghĩ về nó như là một khóa thứ cấp (quá đơn giản).
 
 ## INDEX(first_name), INDEX(last_name)
 
@@ -170,15 +170,15 @@ The EXPLAIN không cung cấp thông tin chi tiết về số lượng hàng đ�
              type: ref
     possible_keys: compound
               key: compound
-          key_len: 184             <-- The length of both fields
-              ref: const,const     <-- The WHERE clause gave constants for both
+          key_len: 184             <-- Độ dài của cả 2 trường
+              ref: const,const     <-- Mệnh đề WHERE trả về hằng cho cả 2
              rows: 1               <-- Goodie!  It homed in on the one row.
             Extra: Using where
     
 
 ## "Covering": INDEX(last_name, first_name, term)
 
-Sự ngạc nhiên! Chúng tôi thực sự có thể làm tốt hơn một chút. 
+Ngạc nhiên chưa! Chúng tôi thực sự có thể làm tốt hơn một chút. 
 1 chỉ mục "Bao trùm" là 1 thứ mà _tất cả_ các trường của lệnh SELECT có thể được tìm thấy trong chỉ mục.  
 Nó có 1 điểm cộng thêm là không phải tiếp cận "dữ liệu"để hoàn thành công việc. 1. Tìm kiếm chỉ mục trong BTre để lấy chỉ mục chính xác của dọng Johnson+Andrew, được chuỗi =(17). 2. Xuất kết quả (1865-1869). "Dữ liệu" BTree không được động tới, đây là sự cỉa tiến so với "trộn".
     
